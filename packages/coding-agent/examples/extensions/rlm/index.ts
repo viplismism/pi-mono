@@ -319,6 +319,9 @@ export default function rlmExtension(pi: ExtensionAPI): void {
 					};
 				}
 
+				// Resolve API key via model registry (supports models.json, env vars, etc.)
+				const apiKey = await ctx.modelRegistry.getApiKey(model);
+
 				const handleEvent = (event: RlmEvent) => {
 					switch (event.type) {
 						case "iteration_start": {
@@ -425,6 +428,7 @@ export default function rlmExtension(pi: ExtensionAPI): void {
 						model,
 						repl,
 						signal,
+						apiKey,
 						onEvent: handleEvent,
 					});
 				} catch (err) {

@@ -51,6 +51,8 @@ export interface RlmOptions {
 	model: Model<Api>;
 	repl: PythonRepl;
 	signal?: AbortSignal;
+	/** API key to pass through to completeSimple for custom providers (e.g. grid). */
+	apiKey?: string;
 	/** Called with structured events as the RLM loop progresses. */
 	onEvent?: (event: RlmEvent) => void;
 }
@@ -184,7 +186,7 @@ function truncateStdout(stdout: string): string {
 }
 
 export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
-	const { context, query, model, repl, signal, onEvent } = options;
+	const { context, query, model, repl, signal, apiKey, onEvent } = options;
 
 	await repl.setContext(context);
 	await repl.resetFinal();
@@ -212,15 +214,19 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 
 		for (let retry = 0; retry < 3; retry++) {
 			try {
-				const response = await completeSimple(model, {
-					messages: [
-						{
-							role: "user",
-							content: `Context:\n${subContext}\n\nInstruction: ${instruction}`,
-							timestamp: Date.now(),
-						},
-					],
-				});
+				const response = await completeSimple(
+					model,
+					{
+						messages: [
+							{
+								role: "user",
+								content: `Context:\n${subContext}\n\nInstruction: ${instruction}`,
+								timestamp: Date.now(),
+							},
+						],
+					},
+					{ apiKey },
+				);
 
 				const textParts = response.content.filter((b): b is TextContent => b.type === "text").map((b) => b.text);
 				const result = textParts.join("\n");
@@ -277,10 +283,14 @@ export async function runRlmLoop(options: RlmOptions): Promise<RlmResult> {
 		let lastError: string | undefined;
 		for (let retry = 0; retry < 3; retry++) {
 			try {
-				response = await completeSimple(model, {
-					systemPrompt: buildSystemPrompt(),
-					messages: conversationHistory,
-				});
+				response = await completeSimple(
+					model,
+					{
+						systemPrompt: buildSystemPrompt(),
+						messages: conversationHistory,
+					},
+					{ apiKey },
+				);
 				break;
 			} catch (err) {
 				const errorMsg = err instanceof Error ? err.message : String(err);
