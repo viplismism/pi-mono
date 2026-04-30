@@ -1,0 +1,41 @@
+Setup & Run pi-mono
+====================
+
+Prerequisites
+-------------
+- Node.js >= v20.0.0
+- Python 3 (needed for the RLM extension)
+
+Steps
+-----
+1. Unzip and enter the folder:
+
+   unzip pi-mono.zip
+   cd pi-mono
+
+2. Build all packages (node_modules is already included):
+
+   npm run build
+
+3. Set an API key:
+
+   export ANTHROPIC_API_KEY=sk-ant-...
+
+   Other providers also work (OpenAI, Google, etc.)
+   See packages/coding-agent/docs/providers.md for details.
+
+4. Run:
+
+   ./pi-test.sh
+
+RLM Extension
+-------------
+The RLM extension (Recursive Language Models — arXiv:2512.24601) is
+pre-installed at .pi/extensions/rlm/ and auto-loads on startup.
+
+It adds the rlm_query tool which can process arbitrarily large contexts
+(entire codebases, massive logs, long documents) by exploring them
+programmatically via a Python REPL instead of ingesting everything at once.
+
+Just ask pi to analyze something large and it will use rlm_query
+automatically when the context is too big for a single prompt.
